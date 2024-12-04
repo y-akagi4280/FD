@@ -1,0 +1,306 @@
+﻿@model HomeViewModel
+@{
+    ViewData["Title"] = "釣りバカ日誌";
+}
+@section Styles{
+    <style>
+        html, body, div, span, applet, object, iframe,
+        h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+        a, abbr, acronym, address, big, cite, code,
+        del, dfn, em, img, ins, kbd, q, s, samp,
+        small, strike, strong, sub, sup, tt, var,
+        b, u, i, center,
+        dl, dt, dd, ol, ul, li,
+        fieldset, form, label, legend,
+        table, caption, tbody, tfoot, thead, tr, th, td,
+        article, aside, canvas, details, embed,
+        figure, figcaption, footer, header, hgroup,
+        menu, nav, output, ruby, section, summary,
+        time, mark, audio, video {
+            padding: 0;
+            border: 0;
+            font: inherit;
+            font-size: 100%;
+            vertical-align: baseline;
+        }
+
+        html {
+            line-height: 1;
+        }
+
+        ol, ul {
+            list-style: none;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        caption, th, td {
+            text-align: left;
+            font-weight: normal;
+            vertical-align: middle;
+        }
+
+        q, blockquote {
+            quotes: none;
+        }
+
+        q:before, q:after, blockquote:before, blockquote:after {
+            content: "";
+            content: none;
+        }
+
+        a img {
+            border: none;
+        }
+
+        article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section, summary {
+            display: block;
+        }
+
+        a.btn-new{
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1.5;
+            position: relative;
+            display: inline-block;
+            padding: 1rem 4rem;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-transition: all 0.3s;
+            transition: all 0.3s;
+            text-align: center;
+            vertical-align: middle;
+            text-decoration: none;
+            letter-spacing: 0.1em;
+            color: #212529;
+            border-radius: 0.5rem;
+        }
+
+        a.btn-border-new {
+            margin-bottom: 12px;
+            padding: 0;
+            -webkit-transition: all 0.3s;
+            transition: all 0.3s;
+            border-radius: 0;
+        }
+
+        a.btn-border-new span {
+            position: relative;
+            display: block;
+            padding: 0.5rem 2rem;
+            color: #000;
+            border: 2px solid #000;
+            border-radius: 0.5rem;
+            background: #fff;
+        }
+
+        a.btn-border-new:before {
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            display: block;
+            width: 100%;
+            height: 14px;
+            content: "";
+            -webkit-transition: all 0.3s;
+            transition: all 0.3s;
+            border: 2px solid #000;
+            border-top: 1px solid #000;
+            border-radius: 0 0 0.5rem 0.5rem;
+            background-image: -webkit-repeating-linear-gradient( 135deg, #000, #000 1px, transparent 2px, transparent 5px );
+            background-image: repeating-linear-gradient( -45deg, #000, #000 1px, transparent 2px, transparent 5px );
+            background-size: 7px 7px;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+
+        a.btn-border-new:hover {
+            -webkit-transform: translate(0, 3px);
+            transform: translate(0, 3px);
+        }
+
+        a.btn-border-new:hover:before {
+            bottom: -5px;
+        }
+
+        a.btn-border-new:active {
+            -webkit-transform: translate(0, 7px);
+            transform: translate(0, 7px);
+        }
+
+        a.btn-border-new:active:before {
+            bottom: -1px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css" />
+}
+@section scripts{
+    <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+    <script type="text/javascript">
+        let editId = 0;
+
+        window.addEventListener('load', (e) => {
+
+            GetHomeData();
+        })
+
+        async function GetHomeData(){
+
+            const data = await asyncForm(`@Url.Action("GetHomeData")`, null)
+                .then(response => response.json())
+                .then(data => data)
+
+            if(!data){
+                return;
+            }
+
+            SetDetail(data.dairies);
+            
+        }
+
+        function SetDetail(data) {
+
+            let tableData = [];
+
+            for(let i = 0; i < data.length; i++){
+
+                tableData.push({
+                    id: data[i].id,
+                    title: data[i].title,
+                    fishingdate: formatDate(data[i].fishingdate),
+                    addressname: data[i].prefecture + data[i].municipalities + data[i].addressnumber,
+                    companion: data[i].companion1
+                                + data[i].companion2
+                                + data[i].companion3
+                                + data[i].companion4
+                                + data[i].companion5,
+                });
+
+                if(data[i].id > editId){
+                    editId = data[i].id;
+                }
+            }
+
+            editId += 1;
+
+            $("#detail").DataTable({
+                // データ
+                data: tableData,
+                // 件数切替機能 無効
+                lengthChange: false,
+                // ソート機能 無効
+                ordering: false,
+                // 情報表示 無効
+                info: false,
+                // 言語
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json"
+                },
+                // 表示明細数
+                displayLength: 13,
+                // 列設定
+                columns: [
+                    { data: "id"},
+                    { data: "title"},
+                    { data: "fishingdate" },
+                    { data: "addressname" },
+                    { data: "companion" },
+                    { data: "id",
+                        render: function (data, type, row, meta) {
+                            return `<button class="btn btn-primary btn-xs edit" style="margin-right:16px;" data-jnum="${data}"><span class="glyphicon glyphicon-pencil"></span></button><button class="btn btn-danger btn-xs delete" data-jnum="${data}"><span class="glyphicon glyphicon-remove"></span></button>`;
+                        }
+                    },
+                ],
+                columnDefs: [
+                    { targets: 0, visible: false },
+                    { targets: 4, visible: false },
+                ]
+            });
+
+            $(document).on('click', '.edit', function () {
+                const jnum = $(this).data('jnum');
+                actionEdit(jnum, 1);
+            });
+
+            $(document).on('click', '.delete', async function () {
+                const jnum = $(this).data('jnum');
+                let result = confirm("削除しますか？");
+
+                if(result){
+
+                    loadStart();
+
+                    let request = {id : jnum};
+
+                    const data = await asyncForm(`@Url.Action("Delete")`, request)
+                        .then(response => response.json())
+                        .then(data => data)
+
+                    if (!data) {
+                        return;
+                    }
+
+                    loadEnd();
+
+                    location.href = '@Url.Action("Index")';
+                }
+            });
+        }
+
+        // ブラウザの戻る・進むボタンで表示されたページの場合
+        // 画面のリロード実行(model更新)
+        window.addEventListener('pageshow', () => {
+            if (performance.getEntriesByType("navigation")[0].type === 'back_forward') {
+                location.reload();
+            }
+        });
+        
+
+        // yyyy/MM/dd変換
+        function formatDate(date){
+
+            let stringDate = String(date);
+
+            if(stringDate.length != 8){
+                return stringDate;
+            }
+
+            let arr = (stringDate.substr(0, 4) + '/' + stringDate.substr(4, 2) + '/' + stringDate.substr(6, 2)).split('/');
+
+            let fishingdate = new Date(arr[0], arr[1] - 1, arr[2]);
+
+            const yyyy = fishingdate.getFullYear();
+            const mm = ('00' + (fishingdate.getMonth() + 1)).slice(-2);
+            const dd = ('00' + fishingdate.getDate()).slice(-2);
+
+            return `${yyyy}/${mm}/${dd}`;
+        }
+
+    </script>
+}
+
+<div class="text-center">
+    <table id="detail" class="table table-striped table-bordered" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>タイトル</th>
+                <th>日付</th>
+                <th>場所</th>
+                <th>同伴者</th>
+                <th style="text-align:center;width:70px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <div style="text-align:left">
+        <a class="btn-new btn-border-new" onclick="actionEdit(editId, 0)"><span>新規</span></a>
+    </div>
+</div>

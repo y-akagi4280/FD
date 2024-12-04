@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\釣りバカ日誌.props" />
+</Project>
